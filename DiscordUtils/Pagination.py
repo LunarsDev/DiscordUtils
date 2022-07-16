@@ -29,6 +29,7 @@ class AutoEmbedPaginator(object):
         msg = await msg.channel.fetch_message(msg.id)
         def check(reaction, user):
             return user == wait_for and reaction.message.id == msg.id and str(reaction.emoji) in self.control_emojis
+
         while True:
             if self.timeout > 0:
                 try:
@@ -42,7 +43,6 @@ class AutoEmbedPaginator(object):
                             except:
                                 pass
                     return msg
-                    break
             else:
                 reaction, user = await self.bot.wait_for("reaction_add",check=check)
             if str(reaction.emoji) == self.control_emojis[0]:
@@ -57,7 +57,7 @@ class AutoEmbedPaginator(object):
                 await msg.edit(embed=self.embeds[0])
             elif str(reaction.emoji) == self.control_emojis[1]:
                 self.current_page = self.current_page-1
-                self.current_page = 0 if self.current_page<0 else self.current_page
+                self.current_page = max(self.current_page, 0)
                 if self.remove_reactions:
                     try:
                         await msg.remove_reaction(str(reaction.emoji), user)
@@ -75,7 +75,6 @@ class AutoEmbedPaginator(object):
                     except:
                         pass
                 return msg
-                break
             elif str(reaction.emoji) == self.control_emojis[3]:
                 self.current_page = self.current_page + 1
                 self.current_page = len(self.embeds)-1 if self.current_page > len(self.embeds)-1 else self.current_page
@@ -149,6 +148,7 @@ class CustomEmbedPaginator(object):
         msg = await msg.channel.fetch_message(msg.id)
         def check(reaction, user):
             return user == wait_for and reaction.message.id == msg.id and str(reaction.emoji) in self.control_emojis
+
         while True:
             if self.timeout > 0:
                 try:
@@ -162,7 +162,6 @@ class CustomEmbedPaginator(object):
                                     pass
                     self.current_page = 0
                     return msg
-                    break
             else:
                 reaction, user = await self.bot.wait_for("reaction_add",check=check)
             for emoji in self.control_emojis:
@@ -191,7 +190,7 @@ class CustomEmbedPaginator(object):
                         await msg.edit(embed=self.embeds[len(self.embeds)-1])
                     elif cmd.lower() == "next":
                         self.current_page += 1
-                        self.current_page = len(self.embeds)-1 if self.current_page > len(self.embeds)-1 else self.current_page
+                        self.current_page = min(self.current_page, len(self.embeds)-1)
                         if self.remove_reactions:
                             try:
                                 await msg.remove_reaction(str(reaction.emoji), user)
@@ -202,7 +201,7 @@ class CustomEmbedPaginator(object):
                         await msg.edit(embed=self.embeds[self.current_page])
                     elif cmd.lower() == "back":
                         self.current_page = self.current_page-1
-                        self.current_page = 0 if self.current_page<0 else self.current_page
+                        self.current_page = max(self.current_page, 0)
                         if self.remove_reactions:
                             try:
                                 await msg.remove_reaction(str(reaction.emoji), user)
@@ -215,8 +214,7 @@ class CustomEmbedPaginator(object):
                         self.current_page = 0
                         await msg.delete()
                         return msg
-                        break
-                    elif cmd.lower() == "clear" or cmd.lower() == "lock":
+                    elif cmd.lower() in ["clear", "lock"]:
                         self.current_page = 0
                         for reaction in msg.reactions:
                             try:
@@ -229,15 +227,12 @@ class CustomEmbedPaginator(object):
                                     except:
                                         pass
                         return msg
-                        break
                     elif cmd.startswith("page"):
                         shit = cmd.split()
                         pg = int(shit[1])
                         self.current_page = pg
-                        if pg > len(embeds)-1:
-                            pg = len(embeds)-1
-                        if pg < 0:
-                            pg = 0
+                        pg = min(pg, len(embeds)-1)
+                        pg = max(pg, 0)
                         if self.remove_reactions:
                             try:
                                 await msg.remove_reaction(str(reaction.emoji), user)
@@ -252,8 +247,8 @@ class CustomEmbedPaginator(object):
                         something = things[0]
                         if something.isdigit():
                             index = int(something)
-                            index = len(self.control_emojis)-1 if index > len(self.control_emojis)-1 else index
-                            index = 0 if index < 0 else index
+                            index = min(index, len(self.control_emojis)-1)
+                            index = max(index, 0)
                             emoji = self.control_emojis[index]
                             if self.remove_reactions:
                                 try:
